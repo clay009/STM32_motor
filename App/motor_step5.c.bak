@@ -34,10 +34,10 @@ void Run_one_step(){
 	TIM_SelectOCxM(TIM1, TIM_Channel_2, TIM_OCMode_PWM1);
 	TIM_SelectOCxM(TIM1, TIM_Channel_3, TIM_OCMode_PWM1);
 
-	#if 1//TIM8_PWM
-	TIM_SelectOCxM(TIM8, TIM_Channel_1, TIM_OCMode_PWM2);
-	TIM_SelectOCxM(TIM8, TIM_Channel_2, TIM_OCMode_PWM2);
-	TIM_SelectOCxM(TIM8, TIM_Channel_3, TIM_OCMode_PWM2);	
+	#if TIM8_PWM
+	TIM_SelectOCxM(TIM8, TIM_Channel_1, TIM_OCMode_PWM1);
+	TIM_SelectOCxM(TIM8, TIM_Channel_2, TIM_OCMode_PWM1);
+	TIM_SelectOCxM(TIM8, TIM_Channel_3, TIM_OCMode_PWM1);	
 	#endif
 		
 	switch(step5_phase){
@@ -193,7 +193,7 @@ void TIM8_PWM_Init(u16 arr,u16 psc)
 	TIM_OCInitTypeDef  TIM_OCInitStructure;
 //	TIM_BDTRInitTypeDef      TIM_BDTRInitStructure;
 
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM8, ENABLE);// 
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1, ENABLE);// 
  	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC , ENABLE);  //使能GPIO外设时钟使能
 	                                                                     	
 
@@ -512,7 +512,7 @@ void STEP5_motor_init(void){
 	Tim6_int_init();
 	TIM6_Configuration(50000);//50000 MS
 		
-	#if TIM8_PWM
+	#if 1//TIM8_PWM
 	TIM8_PWM_Init(899,0);
 	TIM_SetCompare1(TIM8,400);	
 	TIM_SetCompare2(TIM8,400);	
