@@ -201,12 +201,43 @@ void Delay(vu32 nCount)
 #define SLOW 600//600 //50*1000--10Hz
 #define FAST 	100   //50 10K
 #define GAP  50
+
+void TEST_IO_init(){
+	GPIO_InitTypeDef GPIO_InitStructure;
+
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB| RCC_APB2Periph_GPIOC| RCC_APB2Periph_GPIOD, ENABLE);//|RCC_APB2Periph_AFIO
+	
+  GPIO_InitStructure.GPIO_Pin = EN_PIN;//STEP_EN PA10
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+  GPIO_Init(EN_PORT, &GPIO_InitStructure);
+
+  GPIO_InitStructure.GPIO_Pin = CW_PIN;//STEP_CW PA11 
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+  GPIO_Init(CW_PORT, &GPIO_InitStructure);
+
+		/*GPIOA Configuration: TIM3 channel1*/	  //设置该引脚为复用输出功能,输出TIM3 CH1的PWM脉冲波形
+	GPIO_InitStructure.GPIO_Pin = CLK_PIN; //TIM_CH1
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;//GPIO_Mode_AF_PP;  //复用推挽输出
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(CLK_PORT, &GPIO_InitStructure);
+
+
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12; //test
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;//GPIO_Mode_AF_PP;  //复用推挽输出
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
+	GPIO_ResetBits(GPIOA, GPIO_Pin_12);
+}
+
 int main(void)
 	{  
 		uint16_t counter = 0;
 		u8 Key_Vlaue; 
 //	u8 len=0;	
 //	u16 times=0; 
+		bool wise= TRUE;
 		
 	Init_All_Periph();
 	SysTick_Initaize();
@@ -237,14 +268,20 @@ int main(void)
 	STM_EVAL_PBInit(Button_WAKEUP,Mode_GPIO);
 	STM_EVAL_PBInit(Button_KEY1, Mode_GPIO);	
 #else
-	STEP5_init();
+//	STEP5_init();
+	TEST_IO_init();
+	STEP_CW_L();
+	STEP_EN_H();
+	STM_EVAL_PBInit(Button_WAKEUP,Mode_GPIO);
+	STM_EVAL_PBInit(Button_KEY1, Mode_GPIO);	
 #endif	
 	while(1)
 		{
 			//printf("\n uncompleted circle =%d , ",STEP_M_get_uncompleted_circle());
 			msg_process();
-			delay_ms(50);	
-			#if 0
+			delay_ms(5);	
+			STEP_CLK_TOGGLE();
+			#if 1
 			Key_Vlaue=KEY_Scan();//得到键值
 			if(Key_Vlaue)
 				{						   
@@ -255,24 +292,33 @@ int main(void)
 						break;
 					case 2: //KEY 1
 						STM_EVAL_LEDToggle(LED1);
-						//STEP_M_stop_run();//NO NEED
-						if( SLOW - GAP*counter > FAST)
-							counter ++ ;
-						STEP_M_set_clock(SLOW - GAP*counter);						
-						//STEP_M_start_run();
+						if(wise){
+							wise = FALSE;
+							STEP_CW_L();
+							
+							}
+						else{
+							wise = TRUE;
+							STEP_CW_H();
+							}
+						
+
 						break;
 					case 3:				//wakeup
-						//STM_EVAL_LEDToggle(LED1);
 						STM_EVAL_LEDToggle(LED2);
-						//STEP_M_stop_run();//NO NEED
-					  if(counter>0)
-							counter --;
-						STEP_M_set_clock(SLOW - GAP*counter);					
-						//STEP_M_start_run();
+						if(wise){
+							wise = FALSE;
+							STEP_EN_L();
+							
+							}
+						else{
+							wise = TRUE;
+							STEP_EN_H();
+							}
 						break;
 					}
 					
-					DEBUG("\n counter = %d",counter);
+					//DEBUG("\n counter = %d",counter);
 				} 
 			#endif
 
