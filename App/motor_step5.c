@@ -5,6 +5,11 @@
 #define MAX_PHASE	10
 static char step5_phase = MAX_PHASE;
 static bool clock_wise = TRUE; 
+static int pwm_fre = 1800;
+static int pwm_duty = 0; //8%~ 96%
+#define DUTY_CHANGE_COUNT 10// 50
+static int pwm_duty_gap =0;// pwm_fre/DUTY_CHANGE_COUNT;
+static char duty_count = 0;
 
 /*
 1: IN, 0:OUT others high input
@@ -24,6 +29,7 @@ static bool clock_wise = TRUE;
 */
 	
 void Run_one_step(){
+#if 0
 	if(clock_wise){
 		step5_phase = (step5_phase + 1) % MAX_PHASE;
 		}
@@ -184,6 +190,95 @@ void Run_one_step(){
 		default:
 			break;
 		}
+#else
+
+/*
+	if(duty_count > DUTY_CHANGE_COUNT){
+		duty_count = -1;
+		}
+	*/
+		duty_count++;
+	if(duty_count & 0x01)
+		TIM_SetCompare1(TIM1,0);
+	else
+		TIM_SetCompare1(TIM1,1900);		
+/*		
+	switch(step5_phase){
+		case 0:
+			TIM_SetCompare1(TIM1,pwm_duty_gap*duty_count);	
+			TIM_SetCompare2(TIM1,(pwm_duty_gap*(DUTY_CHANGE_COUNT- duty_count)));	
+			TIM_SetCompare3(TIM1,0);	
+			TIM_SetCompare1(TIM8,0);	
+			TIM_SetCompare2(TIM8,pwm_fre);	
+			TIM_SetCompare3(TIM8,pwm_fre);	
+			break;
+		case 1:
+			TIM_SetCompare1(TIM1,pwm_fre);	
+			TIM_SetCompare2(TIM1,0);	
+			TIM_SetCompare3(TIM1,pwm_fre);	
+			TIM_SetCompare1(TIM8,0);	
+			TIM_SetCompare2(TIM8,0);	
+			TIM_SetCompare3(TIM8,pwm_fre);	
+
+			break;
+		case 2:
+			TIM_SetCompare1(TIM1,pwm_duty_gap*duty_count);	
+			TIM_SetCompare2(TIM1,(pwm_duty_gap*(DUTY_CHANGE_COUNT- duty_count)));	
+			TIM_SetCompare3(TIM1,pwm_fre);	
+			TIM_SetCompare1(TIM8,pwm_fre);	
+			TIM_SetCompare2(TIM8,0);	
+			TIM_SetCompare3(TIM8,0);	
+
+			break;
+		case 3:
+			TIM_SetCompare1(TIM1,0);	
+			TIM_SetCompare2(TIM1,(pwm_duty_gap*(DUTY_CHANGE_COUNT- duty_count)));	
+			TIM_SetCompare3(TIM1,0);	
+			TIM_SetCompare1(TIM8,0);	
+			TIM_SetCompare2(TIM8,pwm_fre);	
+			TIM_SetCompare3(TIM8,pwm_fre);	
+
+			break;
+		case 4:
+			TIM_SetCompare1(TIM1,pwm_duty_gap*duty_count);	
+			TIM_SetCompare2(TIM1,(pwm_duty_gap*(DUTY_CHANGE_COUNT- duty_count)));	
+			TIM_SetCompare3(TIM1,0);	
+			TIM_SetCompare1(TIM8,0);	
+			TIM_SetCompare2(TIM8,pwm_fre);	
+			TIM_SetCompare3(TIM8,pwm_fre);	
+			break;
+		case 5:
+			TIM_SetCompare1(TIM1,pwm_fre);	
+			TIM_SetCompare2(TIM1,0);	
+			TIM_SetCompare3(TIM1,pwm_fre);	
+			TIM_SetCompare1(TIM8,0);	
+			TIM_SetCompare2(TIM8,0);	
+			TIM_SetCompare3(TIM8,pwm_fre);	
+
+			break;
+		case 6:
+			TIM_SetCompare1(TIM1,pwm_duty_gap*duty_count);	
+			TIM_SetCompare2(TIM1,(pwm_duty_gap*(DUTY_CHANGE_COUNT- duty_count)));	
+			TIM_SetCompare3(TIM1,pwm_fre);	
+			TIM_SetCompare1(TIM8,pwm_fre);	
+			TIM_SetCompare2(TIM8,0);	
+			TIM_SetCompare3(TIM8,0);	
+
+			break;
+		case 7:
+			TIM_SetCompare1(TIM1,0);	
+			TIM_SetCompare2(TIM1,(pwm_duty_gap*(DUTY_CHANGE_COUNT- duty_count)));	
+			TIM_SetCompare3(TIM1,0);	
+			TIM_SetCompare1(TIM8,0);	
+			TIM_SetCompare2(TIM8,pwm_fre);	
+			TIM_SetCompare3(TIM8,pwm_fre);	
+
+			break;		
+		default:
+			break;
+		}
+		*/
+#endif	
 }
 
 void TIM8_PWM_Init(u16 arr,u16 psc)
@@ -510,26 +605,28 @@ void STEP5_motor_init(void){
 	STEP5_IO_init();
 
 	Tim6_int_init();
-	TIM6_Configuration(50000);//50000 MS
+	TIM6_Configuration(50);//50000 MS
 		
 	#if TIM8_PWM
-	TIM8_PWM_Init(899,0);
-	TIM_SetCompare1(TIM8,400);	
-	TIM_SetCompare2(TIM8,400);	
-	TIM_SetCompare3(TIM8,400);	
+	TIM8_PWM_Init(1800,1); //80k --799, 20k 
+	TIM_SetCompare1(TIM8,900);	
+	TIM_SetCompare2(TIM8,900);	
+	TIM_SetCompare3(TIM8,900);	
 	#else
 	TIM4_Configuration();
-	TIM_SetCompare1(TIM4,400);	
-	TIM_SetCompare2(TIM4,400);	
-	TIM_SetCompare3(TIM4,400);	
-	TIM_SetCompare4(TIM4,400);	
+	TIM_SetCompare1(TIM4,100);	
+	TIM_SetCompare2(TIM4,100);	
+	TIM_SetCompare3(TIM4,100);	
+	TIM_SetCompare4(TIM4,100);	
 	#endif
 	
-	TIM1_PWM_Init(899,0);
-	TIM_SetCompare1(TIM1,400);	
-	TIM_SetCompare2(TIM1,400);	
-	TIM_SetCompare3(TIM1,400);	
+	TIM1_PWM_Init(1800,0);
+	TIM_SetCompare1(TIM1,0);	
+	TIM_SetCompare2(TIM1,1800);	
+	TIM_SetCompare3(TIM1,0);	
 
+
+	#if 0
 	PHASE_AN_L_OFF;
 	PHASE_BN_L_OFF;
 	PHASE_CN_L_OFF;
@@ -540,5 +637,18 @@ void STEP5_motor_init(void){
 	PHASE_C_H_OFF;
 	PHASE_D_H_OFF;
 	PHASE_E_H_OFF;
-	//TIM_Cmd(TIM6, ENABLE); 
+	#else
+	PHASE_AN_L_ON;
+	PHASE_BN_L_ON;
+	PHASE_CN_L_ON;
+	PHASE_DN_L_ON;
+	PHASE_EN_L_ON;
+	PHASE_A_H_ON;
+	PHASE_B_H_ON;
+	PHASE_C_H_ON;
+	PHASE_D_H_ON;
+	PHASE_E_H_ON;
+	#endif
+	pwm_duty_gap = pwm_fre/DUTY_CHANGE_COUNT;
+	TIM_Cmd(TIM6, ENABLE); 
 }
