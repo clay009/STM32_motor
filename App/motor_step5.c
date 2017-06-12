@@ -193,16 +193,21 @@ void Run_one_step(){
 		}
 #else
 
-
+	TEST5_CLK_TOGGLE();
 	duty_count++;
 	if(duty_count >= MAX_PHASE*DUTY_STEP) duty_count =0;
 	step5_phase = duty_count/DUTY_STEP;
 	switch(step5_phase){
 		case 0:
 			STEP5_CLK_H();
+			//A
 			if(duty_count > 1){//gap begin start
-				TIM_SetCompare1(TIM1,pwm_duty_gap*(DUTY_STEP*2 -duty_count));	
+				PHASE_A_RISING;
+				//TIM_SetCompare1(TIM1,pwm_duty_gap*(DUTY_STEP*2 -duty_count));	
 				}
+			//B
+			TIM_SetCompare2(TIM1,pwm_fre+100);
+			
 			break;
 		case 1:
 			STEP5_CLK_L();
@@ -564,7 +569,9 @@ void STEP5_IO_init(){
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(CLK5_PORT, &GPIO_InitStructure);
 	STEP5_CLK_L();//default for rasing edge  	
-
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12; //test
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
+	
 
 	GPIO_InitStructure.GPIO_Pin =GPIO_Pin_6 | GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;  
