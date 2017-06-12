@@ -5,11 +5,12 @@
 #define MAX_PHASE	10
 static char step5_phase = MAX_PHASE;
 static bool clock_wise = TRUE; 
-static int pwm_fre = 1800;
+static int pwm_fre = 1800; //20k
 static int pwm_duty = 0; //8%~ 96%
-#define DUTY_CHANGE_COUNT 10// 50
-static int pwm_duty_gap =0;// pwm_fre/DUTY_CHANGE_COUNT;
+#define DUTY_STEP  25 // 
+static int pwm_duty_gap =76;// pwm_fre/DUTY_STEP;
 static char duty_count = 0;
+static int step_speed = 25000;// 0.125s * 10 /DUTY_STEP =25ms  125000*10/50=
 
 /*
 1: IN, 0:OUT others high input
@@ -192,92 +193,64 @@ void Run_one_step(){
 		}
 #else
 
-/*
-	if(duty_count > DUTY_CHANGE_COUNT){
-		duty_count = -1;
-		}
-	*/
-		duty_count++;
-	if(duty_count & 0x01)
-		TIM_SetCompare1(TIM1,0);
-	else
-		TIM_SetCompare1(TIM1,1900);		
-/*		
+
+	duty_count++;
+	if(duty_count >= MAX_PHASE*DUTY_STEP) duty_count =0;
+	step5_phase = duty_count/DUTY_STEP;
 	switch(step5_phase){
 		case 0:
-			TIM_SetCompare1(TIM1,pwm_duty_gap*duty_count);	
-			TIM_SetCompare2(TIM1,(pwm_duty_gap*(DUTY_CHANGE_COUNT- duty_count)));	
-			TIM_SetCompare3(TIM1,0);	
-			TIM_SetCompare1(TIM8,0);	
-			TIM_SetCompare2(TIM8,pwm_fre);	
-			TIM_SetCompare3(TIM8,pwm_fre);	
+			STEP5_CLK_H();
+			if(duty_count > 1){//gap begin start
+				TIM_SetCompare1(TIM1,pwm_duty_gap*(DUTY_STEP*2 -duty_count));	
+				}
 			break;
 		case 1:
-			TIM_SetCompare1(TIM1,pwm_fre);	
-			TIM_SetCompare2(TIM1,0);	
-			TIM_SetCompare3(TIM1,pwm_fre);	
-			TIM_SetCompare1(TIM8,0);	
-			TIM_SetCompare2(TIM8,0);	
-			TIM_SetCompare3(TIM8,pwm_fre);	
-
+			STEP5_CLK_L();
+			TIM_SetCompare1(TIM1,pwm_duty_gap*(DUTY_STEP*2 -duty_count));	
+			//TIM_SetCompare1(TIM1,pwm_duty_gap*duty_count);	
 			break;
 		case 2:
-			TIM_SetCompare1(TIM1,pwm_duty_gap*duty_count);	
-			TIM_SetCompare2(TIM1,(pwm_duty_gap*(DUTY_CHANGE_COUNT- duty_count)));	
-			TIM_SetCompare3(TIM1,pwm_fre);	
-			TIM_SetCompare1(TIM8,pwm_fre);	
-			TIM_SetCompare2(TIM8,0);	
-			TIM_SetCompare3(TIM8,0);	
+			STEP5_CLK_H();
+			TIM_SetCompare1(TIM1,0);	//hight
 
 			break;
 		case 3:
-			TIM_SetCompare1(TIM1,0);	
-			TIM_SetCompare2(TIM1,(pwm_duty_gap*(DUTY_CHANGE_COUNT- duty_count)));	
-			TIM_SetCompare3(TIM1,0);	
-			TIM_SetCompare1(TIM8,0);	
-			TIM_SetCompare2(TIM8,pwm_fre);	
-			TIM_SetCompare3(TIM8,pwm_fre);	
+			STEP5_CLK_L();
+			TIM_SetCompare1(TIM1,0);	//hight	
 
 			break;
 		case 4:
-			TIM_SetCompare1(TIM1,pwm_duty_gap*duty_count);	
-			TIM_SetCompare2(TIM1,(pwm_duty_gap*(DUTY_CHANGE_COUNT- duty_count)));	
-			TIM_SetCompare3(TIM1,0);	
-			TIM_SetCompare1(TIM8,0);	
-			TIM_SetCompare2(TIM8,pwm_fre);	
-			TIM_SetCompare3(TIM8,pwm_fre);	
+			STEP5_CLK_H();
+			TIM_SetCompare1(TIM1,0);	//hight	
 			break;
 		case 5:
-			TIM_SetCompare1(TIM1,pwm_fre);	
-			TIM_SetCompare2(TIM1,0);	
-			TIM_SetCompare3(TIM1,pwm_fre);	
-			TIM_SetCompare1(TIM8,0);	
-			TIM_SetCompare2(TIM8,0);	
-			TIM_SetCompare3(TIM8,pwm_fre);	
-
+			STEP5_CLK_L();
+			if(duty_count > (DUTY_STEP*5+1)){//gap begin start
+				//TIM_SetCompare1(TIM1,pwm_duty_gap*(DUTY_STEP*7 -duty_count));	
+				TIM_SetCompare1(TIM1,pwm_duty_gap*(duty_count-DUTY_STEP*5));
+				}
 			break;
 		case 6:
-			TIM_SetCompare1(TIM1,pwm_duty_gap*duty_count);	
-			TIM_SetCompare2(TIM1,(pwm_duty_gap*(DUTY_CHANGE_COUNT- duty_count)));	
-			TIM_SetCompare3(TIM1,pwm_fre);	
-			TIM_SetCompare1(TIM8,pwm_fre);	
-			TIM_SetCompare2(TIM8,0);	
-			TIM_SetCompare3(TIM8,0);	
-
+			STEP5_CLK_H();
+			//TIM_SetCompare1(TIM1,pwm_duty_gap*(DUTY_STEP*7 -duty_count));	
+			TIM_SetCompare1(TIM1,pwm_duty_gap*(duty_count-DUTY_STEP*5));
 			break;
 		case 7:
-			TIM_SetCompare1(TIM1,0);	
-			TIM_SetCompare2(TIM1,(pwm_duty_gap*(DUTY_CHANGE_COUNT- duty_count)));	
-			TIM_SetCompare3(TIM1,0);	
-			TIM_SetCompare1(TIM8,0);	
-			TIM_SetCompare2(TIM8,pwm_fre);	
-			TIM_SetCompare3(TIM8,pwm_fre);	
-
+			STEP5_CLK_L();
+			TIM_SetCompare1(TIM1,pwm_fre+100);	
+			break;		
+		case 8:
+			STEP5_CLK_H();
+			TIM_SetCompare1(TIM1,pwm_fre+100);	
+			break;		
+		case 9:
+			STEP5_CLK_L();
+			TIM_SetCompare1(TIM1,pwm_fre+100);	
 			break;		
 		default:
 			break;
 		}
-		*/
+		
 #endif	
 }
 
@@ -565,7 +538,7 @@ void Tim6_int_init(void){
 
 static bool test_int = FALSE;
 void STEP5_motor_phase_INT(void){
-	//	STEP5_CLK_TOGGLE();
+/*	//	STEP5_CLK_TOGGLE();
 	if(test_int){
 		STEP5_CLK_H();
 		test_int = FALSE;
@@ -575,7 +548,7 @@ void STEP5_motor_phase_INT(void){
 		test_int = TRUE;
 		STEP5_CLK_L();
 	}
-
+*/
 	Run_one_step();
 }
 
@@ -605,7 +578,7 @@ void STEP5_motor_init(void){
 	STEP5_IO_init();
 
 	Tim6_int_init();
-	TIM6_Configuration(50);//50000 MS
+	TIM6_Configuration(step_speed);//25 MSstep_speed*10
 		
 	#if TIM8_PWM
 	TIM8_PWM_Init(1800,1); //80k --799, 20k 
@@ -620,8 +593,8 @@ void STEP5_motor_init(void){
 	TIM_SetCompare4(TIM4,100);	
 	#endif
 	
-	TIM1_PWM_Init(1800,0);
-	TIM_SetCompare1(TIM1,0);	
+	TIM1_PWM_Init(pwm_fre,0);
+	TIM_SetCompare1(TIM1,pwm_fre+100);	
 	TIM_SetCompare2(TIM1,1800);	
 	TIM_SetCompare3(TIM1,0);	
 
@@ -639,6 +612,7 @@ void STEP5_motor_init(void){
 	PHASE_E_H_OFF;
 	#else
 	PHASE_AN_L_ON;
+	/*
 	PHASE_BN_L_ON;
 	PHASE_CN_L_ON;
 	PHASE_DN_L_ON;
@@ -648,7 +622,8 @@ void STEP5_motor_init(void){
 	PHASE_C_H_ON;
 	PHASE_D_H_ON;
 	PHASE_E_H_ON;
+	*/
 	#endif
-	pwm_duty_gap = pwm_fre/DUTY_CHANGE_COUNT;
+	pwm_duty_gap = pwm_fre/(DUTY_STEP*2);
 	TIM_Cmd(TIM6, ENABLE); 
 }
