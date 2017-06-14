@@ -426,6 +426,8 @@ GPIO_Init(GPIOB,&GPIO_InitStructure);
 		TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCNIdleState_Set;//TIM_OCNIdleState_Reset //fail to set high
 
 	TIM_OC1Init(TIM1, &TIM_OCInitStructure);  //根据TIM_OCInitStruct中指定的参数初始化外设TIMx
+	TIM_OC2Init(TIM1, &TIM_OCInitStructure);
+	TIM_OC3Init(TIM1, &TIM_OCInitStructure);
 
 
 
